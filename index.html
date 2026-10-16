@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ford Fiesta Multimedia Player</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-color: #00d2ff;
+            --text-color: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .player-container {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            width: 360px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            border: 2px solid #333;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .speedometer {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Contenedor multimedia adaptable para Fotos (MP3) o Video (MP4) */
+        .media-screen {
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .media-screen img, .media-screen video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .song-info {
+            margin-bottom: 20px;
+        }
+
+        .song-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+
+        .song-artist {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        button {
+            background-color: #333;
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            color: #000;
+        }
+
+        button.play-btn {
+            width: 60px;
+            height: 60px;
+            background-color: var(--accent-color);
+            color: #000;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="player-container">
+        <!-- Cabecera con Velocímetro -->
+        <div class="header">
+            <span>FORD FIESTA MULTIMEDIA</span>
+            <div class="speedometer">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2v4M4.93 10.93l2.83 2.83M2 18h4M18 18h4M16.24 13.76l2.83-2.83M12 12v6"/>
+                    <circle cx="12" cy="14" r="8"/>
+                </svg>
+                <span>KM/H</span>
+            </div>
+        </div>
+
+        <!-- Pantalla Multimedia (Muestra Imagen para MP3 o Video para MP4) -->
+        <div class="media-screen" id="mediaScreen">
+            <img id="mediaImage" src="" alt="Ford Fiesta" style="display: none;">
+            <video id="mediaVideo" style="display: none;" playsinline></video>
+        </div>
+
+        <!-- Información de la pista -->
+        <div class="song-info">
+            <h2 id="title" class="song-title">Cargando...</h2>
+            <p id="artist" class="song-artist">Ford Media</p>
+        </div>
+
+        <!-- Controles de Reproducción -->
+        <div class="controls">
+            <button onclick="prevMedia()">⏮</button>
+            <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">▶</button>
+            <button onclick="nextMedia()">⏭</button>
+        </div>
+    </div>
+
+    <script>
+        // Lista mixta: podés poner MP3 (con imagen fija) o MP4 (reproduciendo el video)
+        const playlist = [
+            {
+                type: "audio", // 'audio' para MP3
+                title: "Tema 1 - Audio Ruta",
+                artist: "Ford Fiesta Sound",
+                src: "URL_DE_TU_MP3_EN_SUPABASE", 
+                image: "URL_DE_TU_FOTO_EN_SUPABASE"
+            },
+            {
+                type: "video", // 'video' para MP4
+                title: "Video 1 - Test Drive Fiesta",
+                artist: "Ford Fiesta Video",
+                src: "URL_DE_TU_MP4_EN_SUPABASE" 
+            }
+        ];
+
+        let currentIndex = 0;
+        const titleEl = document.getElementById('title');
+        const artistEl = document.getElementById('artist');
+        const mediaImage = document.getElementById('mediaImage');
+        const mediaVideo = document.getElementById('mediaVideo');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+
+        let activePlayer = null; // Controlará si usamos el video o creamos un objeto de audio
+
+        function loadMedia(index) {
+            const item = playlist[index];
+            titleEl.textContent = item.title;
+            artistEl.textContent = item.artist;
+
+            // Detenemos cualquier reproducción anterior
+            if (activePlayer && activePlayer.tagName === 'VIDEO') {
+                activePlayer.pause();
+            } else if (activePlayer && activePlayer.tagName === 'AUDIO') {
+                activePlayer.pause();
+            }
+
+            if (item.type === "audio") {
+                mediaVideo.style.display = "none";
+                mediaImage.style.display = "block";
+                mediaImage.src = item.image;
+
+                activePlayer = new Audio(item.src);
+            } else if (item.type === "video") {
+                mediaImage.style.display = "none";
+                mediaVideo.style.display = "block";
+                mediaVideo.src = item.src;
+
+                activePlayer = mediaVideo;
+            }
+        }
+
+        function togglePlay() {
+            if (!activePlayer) return;
+
+            if (activePlayer.paused) {
+                activePlayer.play();
+                playPauseBtn.textContent = "⏸";
+            } else {
+                activePlayer.pause();
+                playPauseBtn.textContent = "▶";
+            }
+        }
+
+        function nextMedia() {
+            currentIndex = (currentIndex + 1) % playlist.length;
+            loadMedia(currentIndex);
+            activePlayer.play();
+            playPauseBtn.textContent = "⏸";
+        }
+
+        function prevMedia() {
+            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+            loadMedia(currentIndex);
+            activePlayer.play();
+            playPauseBtn.textContent = "⏸";
+        }
+
+        // Inicializar el reproductor
+        loadMedia(currentIndex);
+    </script>
+</body>
+</html>
