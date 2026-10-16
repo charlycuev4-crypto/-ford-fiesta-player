@@ -55,7 +55,6 @@
             font-size: 18px;
         }
 
-        /* Botón para cargar video del celu */
         .upload-section {
             display: flex;
             justify-content: center;
@@ -74,7 +73,6 @@
             box-shadow: 0 4px 10px rgba(0,210,255,0.3);
         }
 
-        /* Pantalla multimedia a Pantalla Completa */
         .media-screen {
             width: 100%;
             flex-grow: 1;
@@ -154,7 +152,6 @@
 <body>
 
     <div class="player-container">
-        <!-- Cabecera con Velocímetro y botón para elegir video local -->
         <div class="header">
             <span>FORD FIESTA</span>
             <div class="upload-section">
@@ -172,21 +169,19 @@
             </div>
         </div>
 
-        <!-- Pantalla Multimedia -->
         <div class="media-screen" id="mediaScreen">
-            <video id="mediaVideo" playsinline controls></video>
+            <!-- Añadido 'loop' para reproducción automática continua -->
+            <video id="mediaVideo" playsinline autoplay loop></video>
         </div>
 
-        <!-- Información de la pista -->
         <div class="song-info">
             <h2 id="title" class="song-title">Seleccioná un video</h2>
-            <p id="artist" class="song-artist">Almacenamiento Local</p>
+            <p id="artist" class="song-artist">Reproducción Automática</p>
         </div>
 
-        <!-- Controles de Reproducción -->
         <div class="controls">
             <button onclick="rewindMedia()">⏪</button>
-            <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">▶</button>
+            <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">⏸</button>
             <button onclick="forwardMedia()">⏩</button>
         </div>
     </div>
@@ -198,15 +193,14 @@
         const artistEl = document.getElementById('artist');
         const playPauseBtn = document.getElementById('playPauseBtn');
 
-        // Manejar la selección del archivo de video desde el celular
         localFileInput.addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (file) {
                 const fileURL = URL.createObjectURL(file);
                 mediaVideo.src = fileURL;
                 titleEl.textContent = file.name;
-                artistEl.textContent = "Reproduciendo local";
-                mediaVideo.play();
+                artistEl.textContent = "Reproduciendo en bucle";
+                mediaVideo.play().catch(e => console.log("Error al reproducir:", e));
                 playPauseBtn.textContent = "⏸";
             }
         });
