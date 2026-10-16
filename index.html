@@ -158,20 +158,20 @@
     </div>
 
     <script>
-        // Lista mixta: podés poner MP3 (con imagen fija) o MP4 (reproduciendo el video)
+        // Lista mixta con tu video vinculado directamente
         const playlist = [
             {
-                type: "audio", // 'audio' para MP3
+                type: "audio", // 'audio' para MP3 (podes cambiar el link cuando quieras)
                 title: "Tema 1 - Audio Ruta",
                 artist: "Ford Fiesta Sound",
-                src: "URL_DE_TU_MP3_EN_SUPABASE", 
-                image: "URL_DE_TU_FOTO_EN_SUPABASE"
+                src: "URL_DE_TU_MP3", 
+                image: "URL_DE_TU_FOTO"
             },
             {
                 type: "video", // 'video' para MP4
                 title: "Video 1 - Test Drive Fiesta",
                 artist: "Ford Fiesta Video",
-                src: "URL_DE_TU_MP4_EN_SUPABASE" 
+                src: "7fc413ec7c87048c112c77b65101a58a_1791864253341.mp4" 
             }
         ];
 
@@ -182,14 +182,13 @@
         const mediaVideo = document.getElementById('mediaVideo');
         const playPauseBtn = document.getElementById('playPauseBtn');
 
-        let activePlayer = null; // Controlará si usamos el video o creamos un objeto de audio
+        let activePlayer = null;
 
         function loadMedia(index) {
             const item = playlist[index];
             titleEl.textContent = item.title;
             artistEl.textContent = item.artist;
 
-            // Detenemos cualquier reproducción anterior
             if (activePlayer && activePlayer.tagName === 'VIDEO') {
                 activePlayer.pause();
             } else if (activePlayer && activePlayer.tagName === 'AUDIO') {
@@ -237,7 +236,6 @@
             playPauseBtn.textContent = "⏸";
         }
 
-        // Inicializar el reproductor
         loadMedia(currentIndex);
     </script>
 </body>
