@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ford Fiesta Multimedia Total</title>
+    <title>Ford Fiesta Multimedia Pro</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -33,7 +33,7 @@
             background-color: #000;
         }
 
-        /* Pantalla multimedia que llena absolutamente toda la pantalla */
+        /* Pantalla multimedia de fondo */
         .media-screen {
             position: absolute;
             top: 0;
@@ -48,10 +48,10 @@
         .media-screen video {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Pantalla totalmente completa y gigante */
+            object-fit: cover;
         }
 
-        /* Capa superior para los botones y textos flotantes */
+        /* Interfaz flotante con espacio seguro para que nada quede fuera */
         .overlay-ui {
             position: relative;
             z-index: 2;
@@ -60,9 +60,9 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 15px;
+            padding: 25px 15px 20px 15px; /* Margen superior seguro para la barra del navegador */
             box-sizing: border-box;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.8) 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, transparent 25%, transparent 75%, rgba(0,0,0,0.85) 100%);
             pointer-events: none;
         }
 
@@ -74,18 +74,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 15px;
+            font-size: 14px;
             color: #eee;
             text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            margin-top: 10px; /* Baja un poco el menú para que no lo tape la barra superior */
         }
 
         .speedometer {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 4px;
             color: var(--accent-color);
             font-weight: bold;
-            font-size: 16px;
+            font-size: 15px;
         }
 
         .upload-section {
@@ -109,7 +110,8 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 10px; /* Deja aire abajo para los botones */
         }
 
         .song-info {
@@ -118,7 +120,7 @@
         }
 
         .song-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             margin: 0 0 2px 0;
             max-width: 90vw;
@@ -138,7 +140,6 @@
             justify-content: center;
             align-items: center;
             gap: 20px;
-            padding-bottom: 5px;
         }
 
         button {
@@ -174,23 +175,23 @@
 <body>
 
     <div class="player-container">
-        <!-- Video de fondo en pantalla completa real -->
+        <!-- Video en pantalla completa -->
         <div class="media-screen" id="mediaScreen">
-            <video id="mediaVideo" playsinline autoplay loop></video>
+            <video id="mediaVideo" playsinline></video>
         </div>
 
-        <!-- Interfaz flotante -->
+        <!-- Interfaz flotante con posiciones seguras -->
         <div class="overlay-ui">
             <div class="header">
                 <span>FORD FIESTA</span>
                 <div class="upload-section">
                     <label class="file-btn">
-                        📂 Cargar Video
-                        <input type="file" id="localFileInput" accept="video/*" style="display: none;">
+                        📂 Cargar Videos
+                        <input type="file" id="localFileInput" accept="video/*" multiple style="display: none;">
                     </label>
                 </div>
                 <div class="speedometer">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 2v4M4.93 10.93l2.83 2.83M2 18h4M18 18h4M16.24 13.76l2.83-2.83M12 12v6"/>
                         <circle cx="12" cy="14" r="8"/>
                     </svg>
@@ -200,14 +201,14 @@
 
             <div class="footer-info">
                 <div class="song-info">
-                    <h2 id="title" class="song-title">Seleccioná un video</h2>
-                    <p id="artist" class="song-artist">Pantalla Completa</p>
+                    <h2 id="title" class="song-title">Cargá tus videos</h2>
+                    <p id="artist" class="song-artist">Reproducción Automática</p>
                 </div>
 
                 <div class="controls">
-                    <button onclick="rewindMedia()">⏪</button>
-                    <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">⏸</button>
-                    <button onclick="forwardMedia()">⏩</button>
+                    <button onclick="prevMedia()">⏮</button>
+                    <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">▶</button>
+                    <button onclick="nextMedia()">⏭</button>
                 </div>
             </div>
         </div>
@@ -220,15 +221,37 @@
         const artistEl = document.getElementById('artist');
         const playPauseBtn = document.getElementById('playPauseBtn');
 
+        let playlist = [];
+        let currentIndex = 0;
+
+        // Permitir seleccionar varios videos a la vez desde el celu
         localFileInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const fileURL = URL.createObjectURL(file);
-                mediaVideo.src = fileURL;
-                titleEl.textContent = file.name;
-                artistEl.textContent = "Reproduciendo local";
-                mediaVideo.play().catch(e => console.log("Error al reproducir:", e));
-                playPauseBtn.textContent = "⏸";
+            const files = event.target.files;
+            if (files.length > 0) {
+                playlist = Array.from(files);
+                currentIndex = 0;
+                playCurrentMedia();
+            }
+        });
+
+        function playCurrentMedia() {
+            if (playlist.length === 0) return;
+            const file = playlist[currentIndex];
+            const fileURL = URL.createObjectURL(file);
+            
+            mediaVideo.src = fileURL;
+            titleEl.textContent = file.name;
+            artistEl.textContent = `Video ${currentIndex + 1} de ${playlist.length}`;
+            
+            mediaVideo.play().catch(e => console.log("Error al reproducir:", e));
+            playPauseBtn.textContent = "⏸";
+        }
+
+        // Cuando termina un video, pasa automáticamente al siguiente de la lista
+        mediaVideo.addEventListener('ended', function() {
+            if (playlist.length > 0) {
+                currentIndex = (currentIndex + 1) % playlist.length;
+                playCurrentMedia();
             }
         });
 
@@ -244,12 +267,16 @@
             }
         }
 
-        function rewindMedia() {
-            mediaVideo.currentTime -= 5;
+        function nextMedia() {
+            if (playlist.length === 0) return;
+            currentIndex = (currentIndex + 1) % playlist.length;
+            playCurrentMedia();
         }
 
-        function forwardMedia() {
-            mediaVideo.currentTime += 5;
+        function prevMedia() {
+            if (playlist.length === 0) return;
+            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
+            playCurrentMedia();
         }
     </script>
 </body>
