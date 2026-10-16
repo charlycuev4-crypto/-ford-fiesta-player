@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ford Fiesta Multimedia Player</title>
+    <title>Ford Fiesta Multimedia Local</title>
     <style>
         :root {
             --bg-color: #000000;
@@ -55,7 +55,26 @@
             font-size: 18px;
         }
 
-        /* Pantalla multimedia en Pantalla Completa */
+        /* Botón para cargar video del celu */
+        .upload-section {
+            display: flex;
+            justify-content: center;
+            padding: 5px;
+        }
+
+        .file-btn {
+            background-color: var(--accent-color);
+            color: #000;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0,210,255,0.3);
+        }
+
+        /* Pantalla multimedia a Pantalla Completa */
         .media-screen {
             width: 100%;
             flex-grow: 1;
@@ -66,28 +85,31 @@
             justify-content: center;
             align-items: center;
             position: relative;
-            margin: 10px 0;
+            margin: 5px 0;
         }
 
-        .media-screen img, .media-screen video {
+        .media-screen video {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Mantiene la proporción del video sin cortarlo */
+            object-fit: contain;
         }
 
         .song-info {
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-align: center;
         }
 
         .song-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            margin: 0 0 5px 0;
+            margin: 0 0 3px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .song-artist {
-            font-size: 14px;
+            font-size: 13px;
             color: #888;
             margin: 0;
         }
@@ -97,18 +119,18 @@
             justify-content: center;
             align-items: center;
             gap: 25px;
-            padding-bottom: 15px;
+            padding-bottom: 10px;
         }
 
         button {
             background-color: #333;
             color: white;
             border: none;
-            width: 55px;
-            height: 55px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 16px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -121,22 +143,28 @@
         }
 
         button.play-btn {
-            width: 70px;
-            height: 70px;
+            width: 65px;
+            height: 65px;
             background-color: var(--accent-color);
             color: #000;
-            font-size: 24px;
+            font-size: 22px;
         }
     </style>
 </head>
 <body>
 
     <div class="player-container">
-        <!-- Cabecera con Velocímetro -->
+        <!-- Cabecera con Velocímetro y botón para elegir video local -->
         <div class="header">
-            <span>FORD FIESTA MULTIMEDIA</span>
+            <span>FORD FIESTA</span>
+            <div class="upload-section">
+                <label class="file-btn">
+                    📂 Cargar Video
+                    <input type="file" id="localFileInput" accept="video/*" style="display: none;">
+                </label>
+            </div>
             <div class="speedometer">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M12 2v4M4.93 10.93l2.83 2.83M2 18h4M18 18h4M16.24 13.76l2.83-2.83M12 12v6"/>
                     <circle cx="12" cy="14" r="8"/>
                 </svg>
@@ -144,88 +172,64 @@
             </div>
         </div>
 
-        <!-- Pantalla Multimedia a Pantalla Completa -->
+        <!-- Pantalla Multimedia -->
         <div class="media-screen" id="mediaScreen">
-            <img id="mediaImage" src="" alt="Ford Fiesta" style="display: none;">
-            <video id="mediaVideo" style="display: none;" playsinline autoplay controls></video>
+            <video id="mediaVideo" playsinline controls></video>
         </div>
 
         <!-- Información de la pista -->
         <div class="song-info">
-            <h2 id="title" class="song-title">Cargando...</h2>
-            <p id="artist" class="song-artist">Ford Media</p>
+            <h2 id="title" class="song-title">Seleccioná un video</h2>
+            <p id="artist" class="song-artist">Almacenamiento Local</p>
         </div>
 
         <!-- Controles de Reproducción -->
         <div class="controls">
-            <button onclick="prevMedia()">⏮</button>
-            <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">⏸</button>
-            <button onclick="nextMedia()">⏭</button>
+            <button onclick="rewindMedia()">⏪</button>
+            <button id="playPauseBtn" class="play-btn" onclick="togglePlay()">▶</button>
+            <button onclick="forwardMedia()">⏩</button>
         </div>
     </div>
 
     <script>
-        // Lista con tu video ya subido a GitHub
-        const playlist = [
-            {
-                type: "video", 
-                title: "Video Ford Fiesta",
-                artist: "Modo Pantalla Completa",
-                src: "7fc413ec7c87048c112c77b65101a58a_1791864253341.mp4" 
-            }
-        ];
-
-        let currentIndex = 0;
+        const mediaVideo = document.getElementById('mediaVideo');
+        const localFileInput = document.getElementById('localFileInput');
         const titleEl = document.getElementById('title');
         const artistEl = document.getElementById('artist');
-        const mediaImage = document.getElementById('mediaImage');
-        const mediaVideo = document.getElementById('mediaVideo');
         const playPauseBtn = document.getElementById('playPauseBtn');
 
-        let activePlayer = null;
-
-        function loadMedia(index) {
-            const item = playlist[index];
-            titleEl.textContent = item.title;
-            artistEl.textContent = item.artist;
-
-            if (activePlayer && activePlayer.tagName === 'VIDEO') {
-                activePlayer.pause();
+        // Manejar la selección del archivo de video desde el celular
+        localFileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const fileURL = URL.createObjectURL(file);
+                mediaVideo.src = fileURL;
+                titleEl.textContent = file.name;
+                artistEl.textContent = "Reproduciendo local";
+                mediaVideo.play();
+                playPauseBtn.textContent = "⏸";
             }
-
-            if (item.type === "video") {
-                mediaImage.style.display = "none";
-                mediaVideo.style.display = "block";
-                mediaVideo.src = item.src;
-                activePlayer = mediaVideo;
-                activePlayer.play().catch(e => console.log("Autoplay bloqueado:", e));
-            }
-        }
+        });
 
         function togglePlay() {
-            if (!activePlayer) return;
+            if (!mediaVideo.src) return;
 
-            if (activePlayer.paused) {
-                activePlayer.play();
+            if (mediaVideo.paused) {
+                mediaVideo.play();
                 playPauseBtn.textContent = "⏸";
             } else {
-                activePlayer.pause();
+                mediaVideo.pause();
                 playPauseBtn.textContent = "▶";
             }
         }
 
-        function nextMedia() {
-            currentIndex = (currentIndex + 1) % playlist.length;
-            loadMedia(currentIndex);
+        function rewindMedia() {
+            mediaVideo.currentTime -= 5;
         }
 
-        function prevMedia() {
-            currentIndex = (currentIndex - 1 + playlist.length) % playlist.length;
-            loadMedia(currentIndex);
+        function forwardMedia() {
+            mediaVideo.currentTime += 5;
         }
-
-        // Inicializar el reproductor
-        loadMedia(currentIndex);
     </script>
 </body>
 </html>
